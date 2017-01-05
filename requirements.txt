@@ -1,0 +1,4 @@
+Pillow
+
+# apt install libfontconfig1-dev
+Python-fontconfig
