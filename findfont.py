@@ -5,6 +5,15 @@ import argparse
 import fontconfig
 
 
+def list_font():
+    for f in fontconfig.query():
+        f = fontconfig.FcFont(f)
+        for fa in f.family:
+            print(fa[1], end=', ')
+            break
+    print()
+
+
 def find_font(chars):
     """ return all fonts including char """
     ret = {}
@@ -43,7 +52,7 @@ def output_picture(findlist):
             h += (font_height + 10)
         image = image.crop((0, 0, max_w + margin, h + margin))
         ext = 'gif'
-        output_name = '%s.%s'% (ch, ext)
+        output_name = '%s.%s' % (ch, ext)
         with open(output_name, 'wb') as f:
             image.save(f, ext)
         del image
@@ -58,15 +67,27 @@ def output_stdout(findlist):
 
 def main():
     parse = argparse.ArgumentParser()
-    parse.add_argument('chars', help='input characters')
-    parse.add_argument('--outpic', help='output as picture', action='store_true')
+    parse.add_argument('chars', help='input characters',
+                       nargs='?')
+    parse.add_argument('--list',
+                       help='list system fonts',
+                       action='store_true')
+    parse.add_argument('--outpic',
+                       help='output as picture',
+                       action='store_true')
     args = parse.parse_args()
-    findlist = find_font(args.chars)
-    if args.outpic:
+
+    if args.list:
+        list_font()
+    elif args.outpic and args.chars:
+        findlist = find_font(args.chars)
         output_picture(findlist)
-    else:
+    elif args.chars:
+        findlist = find_font(args.chars)
         output_stdout(findlist)
+    else:
+        parse.print_help()
 
 
-if __name__ == '__main__' :
+if __name__ == '__main__':
     main()
