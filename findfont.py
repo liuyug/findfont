@@ -17,27 +17,29 @@ def list_font():
 def find_font(chars):
     """ return all fonts including char """
     ret = {}
-    for ch in chars:
-        ret[ch] = []
     for f in fontconfig.query():
         f = fontconfig.FcFont(f)
-        for ch in chars:
+        for string in chars:
+            ch = string[0]
             if f.has_char(ch):
                 families = [fa[1] for fa in f.family]
-                ret[ch].append((f.file, families))
+                if string not in ret:
+                    ret[string] = []
+                ret[string].append((families, f.file))
+    for r in ret:
+        ret[r] = sorted(ret[r], key=lambda x: x[0])
     return ret
 
 
-def output_picture(findlist):
+def output_picture(findlist, margin=20, font_size=24):
     from PIL import Image, ImageDraw, ImageFont
-    margin = 20
     for ch in findlist:
         image = Image.new('RGB', (10000, 20000), 'white')
         draw = ImageDraw.Draw(image)
         h = margin
         max_w = margin
-        for fontfile, families in findlist[ch]:
-            font = ImageFont.truetype(fontfile, 24)
+        for families, fontfile in findlist[ch]:
+            font = ImageFont.truetype(fontfile, font_size)
             s = '[%s]: ' % (', '.join(['\'%s\'' % f for f in families]))
             fontname_width, fontname_height = font.getsize(s)
             font_width, font_height = font.getsize(ch)
@@ -55,12 +57,13 @@ def output_picture(findlist):
         output_name = '%s.%s' % (ch, ext)
         with open(output_name, 'wb') as f:
             image.save(f, ext)
+        print('Output picture: ' % output_name)
         del image
 
 
 def output_stdout(findlist):
     for ch in findlist:
-        for fontfile, fontname in findlist[ch]:
+        for fontname, fontfile in findlist[ch]:
             s = '%s: %s' % (fontname, ch)
             print(s)
 
@@ -68,7 +71,7 @@ def output_stdout(findlist):
 def main():
     parse = argparse.ArgumentParser()
     parse.add_argument('chars', help='input characters',
-                       nargs='?')
+                       nargs='*')
     parse.add_argument('--list',
                        help='list system fonts',
                        action='store_true')
